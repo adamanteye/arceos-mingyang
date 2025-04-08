@@ -84,7 +84,10 @@ impl axlog::LogIf for LogIfImpl {
     }
 }
 
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::{
+    ptr::{read_volatile, write_volatile},
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 static INITED_CPUS: AtomicUsize = AtomicUsize::new(0);
 
@@ -160,6 +163,15 @@ pub fn rust_main(cpu_id: usize, arg: usize) -> ! {
     #[cfg(feature = "multitask")]
     axtask::init_scheduler();
 
+    #[cfg(feature = "axasync-timer")]
+    axasync::init_timer_waker();
+
+    #[cfg(feature = "irq")]
+    {
+        info!("Initialize interrupt handlers...");
+        init_interrupt();
+    }
+
     #[cfg(any(feature = "fs", feature = "net", feature = "display"))]
     {
         #[allow(unused_variables)]
@@ -177,12 +189,6 @@ pub fn rust_main(cpu_id: usize, arg: usize) -> ! {
 
     #[cfg(feature = "smp")]
     self::mp::start_secondary_cpus(cpu_id);
-
-    #[cfg(feature = "irq")]
-    {
-        info!("Initialize interrupt handlers...");
-        init_interrupt();
-    }
 
     #[cfg(all(feature = "tls", not(feature = "multitask")))]
     {
@@ -212,7 +218,7 @@ pub fn rust_main(cpu_id: usize, arg: usize) -> ! {
 
 #[cfg(feature = "alloc")]
 fn init_allocator() {
-    use axhal::mem::{MemRegionFlags, memory_regions, phys_to_virt};
+    use axhal::mem::{memory_regions, phys_to_virt, MemRegionFlags};
 
     info!("Initialize global memory allocator...");
     info!("  use {} allocator.", axalloc::global_allocator().name());
@@ -241,12 +247,24 @@ fn init_allocator() {
 
 #[cfg(feature = "irq")]
 fn init_interrupt() {
+    // axlog::debug!("init_interrupt");
+    // use axhal::time::TIMER_IRQ_NUM;
+
     // Setup timer interrupt handler
     const PERIODIC_INTERVAL_NANOS: u64 =
         axhal::time::NANOS_PER_SEC / axconfig::TICKS_PER_SEC as u64;
 
+    axlog::trace!(
+        "PERIODIC_INTERVAL_NANOS: {}, NANOS_PER_SEC: {}, TICKS_PER_SEC: {}",
+        PERIODIC_INTERVAL_NANOS,
+        axhal::time::NANOS_PER_SEC,
+        axconfig::TICKS_PER_SEC
+    );
+
     #[percpu::def_percpu]
     static NEXT_DEADLINE: u64 = 0;
+    // WHY???
+    // unsafe { NEXT_DEADLINE.write_current_raw(0) };
 
     fn update_timer() {
         let now_ns = axhal::time::monotonic_time_nanos();
@@ -263,6 +281,16 @@ fn init_interrupt() {
         update_timer();
         #[cfg(feature = "multitask")]
         axtask::on_timer_tick();
+        #[cfg(feature = "axasync-timer")]
+        axasync::check_timer_events();
+        // #[cfg(feature = "net")]
+        // {
+        //     let now_ns = axhal::time::monotonic_time_nanos();
+        //     if now_ns > 20_000_000_000 {
+        //         axnet::poll_interfaces();
+        //     }
+        // }
+        // debug_78();
     });
 
     #[cfg(feature = "ipi")]
@@ -272,6 +300,11 @@ fn init_interrupt() {
 
     // Enable IRQs before starting app
     axhal::asm::enable_irqs();
+    // update_timer();
+    // debug_print();
+    // Enable IRQs before starting app
+    // axhal::arch::enable_irqs();
+    axlog::debug!("enable_irqs");
 }
 
 #[cfg(all(feature = "tls", not(feature = "multitask")))]
@@ -279,4 +312,42 @@ fn init_tls() {
     let main_tls = axhal::tls::TlsArea::alloc();
     unsafe { axhal::asm::write_thread_pointer(main_tls.tls_ptr() as usize) };
     core::mem::forget(main_tls);
+}
+
+fn debug_print() {
+    let plic_addr: usize = 0xFFFF_FFC0_0c00_0000;
+    for i in [5, 6, 7, 76, 77, 78] {
+        let priority = unsafe { read_volatile((plic_addr + i * 4) as *const u32) };
+        trace!("priority of IRQ {}: {:#x}", i, priority);
+    }
+
+    let enable_reg = unsafe { read_volatile((plic_addr + 0x2180) as *const u128) };
+    trace!("plic enable_reg: {:#x}", enable_reg);
+
+    let pending_reg = unsafe { read_volatile((plic_addr + 0x1000) as *const u64) };
+    trace!("plic pending_reg: {:#x}", pending_reg);
+
+    let sie = riscv::register::sie::read().bits();
+    trace!("sie: {:#x}", sie);
+
+    let sip = riscv::register::sip::read().bits();
+    trace!("sip: {:#x}", sip);
+
+    let sstatus = riscv::register::sstatus::read();
+    trace!("sstatus: {:x?}", sstatus);
+
+    let uart_addr: usize = 0xffff_ffc0_1000_0000;
+    let dlh_ier = unsafe { read_volatile((uart_addr + 0x4) as *const u32) };
+    trace!("uart DLH/IER: {:#x}", dlh_ier);
+
+    unsafe { write_volatile((uart_addr + 0x4) as *mut u32, 0x1) };
+    let dlh_ier = unsafe { read_volatile((uart_addr + 0x4) as *const u32) };
+    trace!("uart DLH/IER: {:#x}", dlh_ier);
+}
+
+fn debug_78() {
+    let plic_addr: usize = 0xFFFF_FFC0_0c00_0000;
+    let word = unsafe { read_volatile((plic_addr + 0x1000 + (78 / 32) * 4) as *const u32) };
+    let pending = (word >> (78 % 32)) & 1;
+    trace!("plic pending_reg: {:#x}", pending);
 }

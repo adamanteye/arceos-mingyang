@@ -1,7 +1,7 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-use axconfig::{TASK_STACK_SIZE, plat::CPU_NUM};
-use axhal::mem::{VirtAddr, virt_to_phys};
+use axconfig::{plat::CPU_NUM, TASK_STACK_SIZE};
+use axhal::mem::{virt_to_phys, VirtAddr};
 
 #[unsafe(link_section = ".bss.stack")]
 static mut SECONDARY_BOOT_STACK: [[u8; TASK_STACK_SIZE]; CPU_NUM - 1] =

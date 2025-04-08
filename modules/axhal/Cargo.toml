@@ -21,7 +21,7 @@ uspace = ["paging", "axcpu/uspace"]
 # Custom or default platforms
 myplat = []
 defplat = ["dep:axplat-x86-pc", "dep:axplat-aarch64-qemu-virt", "dep:axplat-riscv64-qemu-virt", "dep:axplat-loongarch64-qemu-virt"]
-
+mmio = ["irq"]
 default = []
 ipi = ["irq"]
 
@@ -43,6 +43,13 @@ axalloc = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 axplat-x86-pc = { version = "0.2", optional = true }
+
+[target.'cfg(any(target_arch = "riscv32", target_arch = "riscv64"))'.dependencies]
+riscv = "0.12"
+sbi-rt = { version = "0.0.3", features = ["legacy"] }
+riscv_goldfish = { version = "0.1", optional = true }
+riscv_plic = { version = "0.1", optional = true }
+ns16550a = "0.4.0"
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 aarch64-cpu = "10.0"

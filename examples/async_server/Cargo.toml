@@ -1,0 +1,27 @@
+[package]
+name = "async_server"
+version = "0.1.0"
+edition = "2021"
+authors = ["ArceOS Contributors"]
+
+[dependencies]
+axstd = { path = "../../ulib/axstd", features = [
+    "alloc",
+    "irq",
+    "net",
+    "mmio",
+] }
+axruntime = { path = "../../modules/axruntime", features = [
+    "alloc",
+    "net",
+    "axasync-timer",
+] }
+axlog = { path = "../../modules/axlog" }
+axalloc = { path = "../../modules/axalloc", features = ["tlsf"] }
+axasync = { path = "../../modules/axasync", features = ["alloc"] }
+axnet = { path = "../../modules/axnet", features = ["async"] }
+axdriver = { workspace = true, features = ["virtio", "bus-mmio", "net", "irq"] }
+
+[features]
+default = ["axstd/default"]
+starfive = ["axdriver/bus-mmio", "axdriver/dwmac"]

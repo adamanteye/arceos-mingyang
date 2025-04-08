@@ -2,7 +2,10 @@
 name = "axnet"
 version.workspace = true
 edition.workspace = true
-authors = ["Yuekai Jia <equation618@gmail.com>", "ChengXiang Qi <kuangjux@outlook.com>"]
+authors = [
+  "Yuekai Jia <equation618@gmail.com>",
+  "ChengXiang Qi <kuangjux@outlook.com>",
+]
 description = "ArceOS network module"
 license.workspace = true
 homepage.workspace = true
@@ -12,6 +15,7 @@ documentation = "https://arceos-org.github.io/arceos/axnet/index.html"
 [features]
 smoltcp = []
 default = ["smoltcp"]
+async = ["smoltcp/async"]
 
 [dependencies]
 log = "=0.4.21"
@@ -20,23 +24,28 @@ spin = "0.10"
 lazyinit = "0.2"
 axerrno = "0.1"
 axio = "0.1"
-axhal = { workspace = true }
+axhal = { workspace = true, features = ["irq"] }
 axsync = { workspace = true }
 axtask = { workspace = true }
 axdriver = { workspace = true, features = ["net"] }
-axdriver_net = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
+axdriver_net = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "484410a7b681b9009197c6bb2651728125664ac0" }
 
 [dependencies.smoltcp]
 git = "https://github.com/rcore-os/smoltcp.git"
 rev = "21a2f82"
 default-features = false
 features = [
-    "alloc", "log",   # no std
-    "medium-ethernet",
-    "proto-ipv4",
-    "proto-ipv6",
-    "socket-raw", "socket-icmp", "socket-udp", "socket-tcp", "socket-dns",
-    # "fragmentation-buffer-size-65536", "proto-ipv4-fragmentation",
-    # "reassembly-buffer-size-65536", "reassembly-buffer-count-32",
-    # "assembler-max-segment-count-32",
+  "alloc",
+  "log",             # no std
+  "medium-ethernet",
+  "proto-ipv4",
+  "proto-ipv6",
+  "socket-raw",
+  "socket-icmp",
+  "socket-udp",
+  "socket-tcp",
+  "socket-dns",
+  # "fragmentation-buffer-size-65536", "proto-ipv4-fragmentation",
+  # "reassembly-buffer-size-65536", "reassembly-buffer-count-32",
+  # "assembler-max-segment-count-32",
 ]

@@ -1,0 +1,51 @@
+[package]
+name = "axasync"
+version.workspace = true
+edition.workspace = true
+authors = ["ArceOS Contributors"]
+description = "Async runtime for ArceOS"
+license.workspace = true
+homepage.workspace = true
+repository = "https://github.com/arceos-org/arceos/tree/main/modules/axasync"
+documentation = "https://arceos-org.github.io/arceos/axasync/index.html"
+
+[features]
+default = []
+
+# Enable multitask support
+multitask = ["axtask/multitask"]
+
+# Enable irq support
+irq = ["axtask/irq"]
+
+# Enable async timeout functionality
+timer = ["irq"]
+
+# Enable async filesystem support
+file = []
+
+# Enable async MMIO functionality
+mmio = ["irq"]
+
+# Enable alloc support
+alloc = []
+
+[dependencies]
+spin = "0.9"
+futures-util = { version = "0.3", default-features = false, features = [
+    "alloc",
+] }
+cfg-if = "1.0"
+kspin = "0.1"
+percpu = "0.2.0"
+lazyinit = "0.2.1"
+
+# ArceOS dependencies
+axlog = { workspace = true }
+axhal = { workspace = true }
+axtask = { workspace = true }
+axsync = { workspace = true }
+axerrno = { workspace = true }
+
+[dev-dependencies]
+futures-executor = "0.3"

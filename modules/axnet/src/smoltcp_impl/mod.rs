@@ -1,6 +1,8 @@
 mod addr;
 mod bench;
 mod dns;
+#[cfg(feature = "async")]
+mod future;
 mod listen_table;
 mod tcp;
 mod udp;
@@ -317,7 +319,7 @@ pub fn bench_receive() {
     ETH0.dev.lock().bench_receive_bandwidth();
 }
 
-pub(crate) fn init(net_dev: AxNetDevice) {
+pub(crate) fn init(net_dev: AxNetDevice, irq: u32) {
     let ether_addr = EthernetAddress(net_dev.mac_address().0);
     let eth0 = InterfaceWrapper::new("eth0", net_dev, ether_addr);
 
@@ -334,4 +336,44 @@ pub(crate) fn init(net_dev: AxNetDevice) {
     info!("  ether:    {}", ETH0.ethernet_address());
     info!("  ip:       {}/{}", ip, IP_PREFIX);
     info!("  gateway:  {}", gateway);
+    info!("  IRQ:      {}", irq);
+
+    // // for qemu virt eth0
+    // axhal::irq::register_handler(irq as usize, handler);
+
+    // for visionfive2 eth0
+    // axhal::irq::register_handler(6, eth_wake_irq);
+    // axhal::irq::register_handler(5, eth_lpi);
+    axhal::irq::register_handler(7, handler);
+
+    // for visionfive2 eth1
+    // axhal::irq::register_handler(77, eth_wake_irq);
+    // axhal::irq::register_handler(76, eth_lpi);
+    axhal::irq::register_handler(78, handler);
+
+    // jh7110 uart0 input interrupt for test if PLIC is working
+    // axhal::irq::register_handler(32, || {
+    //     info!("uart0");
+    // });
+
+    // jh7110 rtc_sec_pulse interrupt for test but rtc need more clock setting
+    // axhal::irq::register_handler(11, || {
+    //     info!("rtc_sec_pulse");
+    // });
+}
+
+fn handler() {
+    info!("eth_irq called");
+    let rx = { ETH0.dev.lock().inner.borrow_mut().clear_intr_status() };
+    if rx {
+        SOCKET_SET.poll_interfaces();
+    }
+}
+
+fn eth_wake_irq() {
+    info!("eth_wake_irq called");
+}
+
+fn eth_lpi() {
+    info!("rth_lpi called");
 }

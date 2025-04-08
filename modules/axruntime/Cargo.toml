@@ -24,6 +24,7 @@ fs = ["axdriver", "axfs"]
 net = ["axdriver", "axnet"]
 display = ["axdriver", "axdisplay"]
 rtc = []
+axasync-timer = ["dep:axasync", "axasync/timer"]
 
 [dependencies]
 axhal = { workspace = true }
@@ -38,9 +39,11 @@ axdisplay = { workspace = true, optional = true }
 axtask = { workspace = true, optional = true }
 axipi = { workspace = true, optional = true }
 axplat = "0.2"
+axasync = { workspace = true, optional = true }
 
 crate_interface = "0.1"
 percpu = { version = "0.2", optional = true }
 ctor_bare = "0.2"
 
 chrono = { version = "0.4.38", default-features = false }
+riscv = "0.12"
