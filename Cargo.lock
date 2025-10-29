@@ -396,6 +396,7 @@ version = "0.1.0"
 dependencies = [
  "axdriver_base",
  "bitflags 2.9.1",
+ "dwmac-rs",
  "fxmac_rs",
  "ixgbe-driver",
  "log",
@@ -992,6 +993,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f93d496c8faa9dc676ebfa225432e1e3b57645c9268ead889286546f6d39356d"
 dependencies = [
  "tock-registers 0.8.1",
+]
+
+[[package]]
+name = "dwmac-rs"
+version = "0.1.0"
+source = "git+https://github.com/mingyang91/dwmac-rs.git?rev=d9fefcb882d558fc216876e74cf283dcaed5eea1#d9fefcb882d558fc216876e74cf283dcaed5eea1"
+dependencies = [
+ "bitflags 2.9.1",
+ "log",
+ "spin",
 ]
 
 [[package]]
