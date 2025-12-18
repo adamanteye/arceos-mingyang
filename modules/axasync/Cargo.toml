@@ -28,7 +28,7 @@ file = []
 mmio = ["irq"]
 
 # Enable alloc support
-alloc = []
+alloc = ["axalloc"]
 
 [dependencies]
 spin = "0.9"
@@ -46,6 +46,7 @@ axhal = { workspace = true }
 axtask = { workspace = true }
 axsync = { workspace = true }
 axerrno = { workspace = true }
+axalloc = { workspace = true, optional = true }
 
 [dev-dependencies]
 futures-executor = "0.3"

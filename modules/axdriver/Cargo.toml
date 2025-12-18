@@ -32,7 +32,6 @@ ramdisk = ["block", "axdriver_block/ramdisk"]
 bcm2835-sdhci = ["block", "axdriver_block/bcm2835-sdhci"]
 ixgbe = ["net", "axdriver_net/ixgbe", "dep:axalloc", "dep:axhal", "dep:axdma"]
 fxmac = ["net", "axdriver_net/fxmac", "dep:axalloc", "dep:axhal", "dep:axdma"]
-# more devices example: e1000 = ["net", "axdriver_net/e1000"]
 dwmac = [
     "net",
     "irq",
@@ -41,6 +40,7 @@ dwmac = [
     "dep:axhal",
     "dep:axdma",
 ]
+# more devices example: e1000 = ["net", "axdriver_net/e1000"]
 
 default = ["bus-pci"]
 
@@ -48,12 +48,12 @@ default = ["bus-pci"]
 log = "=0.4.21"
 cfg-if = "1.0"
 crate_interface = "0.1.4"
-axdriver_base = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
-axdriver_block = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2", optional = true }
+axdriver_base = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "42c1d8c89bdf84b3de95a5eddb21d94ec3bebd75" }
+axdriver_block = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "42c1d8c89bdf84b3de95a5eddb21d94ec3bebd75", optional = true }
 axdriver_net = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "42c1d8c89bdf84b3de95a5eddb21d94ec3bebd75", optional = true }
-axdriver_display = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2", optional = true }
-axdriver_pci = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2", optional = true }
-axdriver_virtio = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2", optional = true }
+axdriver_display = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "42c1d8c89bdf84b3de95a5eddb21d94ec3bebd75", optional = true }
+axdriver_pci = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "42c1d8c89bdf84b3de95a5eddb21d94ec3bebd75", optional = true }
+axdriver_virtio = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "42c1d8c89bdf84b3de95a5eddb21d94ec3bebd75", optional = true }
 axalloc = { workspace = true, optional = true }
 axhal = { workspace = true, optional = true }
 axconfig = { workspace = true, optional = true }
@@ -62,4 +62,4 @@ kspin = { version = "0.1", optional = true }
 lazyinit = { version = "0.2", optional = true }
 
 # StarFive VisionFive 2 Platform Access Crate
-jh7110-vf2-13b-pac = "0.2.0"
+jh7110-vf2-13b-pac = { version = "0.2.0", optional = true }

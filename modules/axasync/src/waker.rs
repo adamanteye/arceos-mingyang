@@ -8,6 +8,8 @@ use axhal::time::TimeValue;
 #[cfg(feature = "timer")]
 use core::sync::atomic::{AtomicU64, Ordering};
 
+use core::task::{RawWaker, RawWakerVTable, Waker};
+
 /// A simple waker that calls the given callback when woken.
 pub struct SimpleWaker<F: Fn() + Send + Sync + Clone + 'static>(F);
 

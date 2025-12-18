@@ -339,25 +339,25 @@ pub(crate) fn init(net_dev: AxNetDevice, irq: u32) {
     info!("  IRQ:      {}", irq);
 
     // // for qemu virt eth0
-    // axhal::irq::register_handler(irq as usize, handler);
+    // axhal::irq::register(irq as usize, handler);
 
     // for visionfive2 eth0
-    // axhal::irq::register_handler(6, eth_wake_irq);
-    // axhal::irq::register_handler(5, eth_lpi);
-    axhal::irq::register_handler(7, handler);
+    // axhal::irq::register(6, eth_wake_irq);
+    // axhal::irq::register(5, eth_lpi);
+    axhal::irq::register(7, handler);
 
     // for visionfive2 eth1
-    // axhal::irq::register_handler(77, eth_wake_irq);
-    // axhal::irq::register_handler(76, eth_lpi);
-    axhal::irq::register_handler(78, handler);
+    // axhal::irq::register(77, eth_wake_irq);
+    // axhal::irq::register(76, eth_lpi);
+    axhal::irq::register(78, handler);
 
     // jh7110 uart0 input interrupt for test if PLIC is working
-    // axhal::irq::register_handler(32, || {
+    // axhal::irq::register(32, || {
     //     info!("uart0");
     // });
 
     // jh7110 rtc_sec_pulse interrupt for test but rtc need more clock setting
-    // axhal::irq::register_handler(11, || {
+    // axhal::irq::register(11, || {
     //     info!("rtc_sec_pulse");
     // });
 }

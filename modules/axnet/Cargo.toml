@@ -28,7 +28,7 @@ axhal = { workspace = true, features = ["irq"] }
 axsync = { workspace = true }
 axtask = { workspace = true }
 axdriver = { workspace = true, features = ["net"] }
-axdriver_net = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "484410a7b681b9009197c6bb2651728125664ac0" }
+axdriver_net = { git = "https://github.com/mingyang91/axdriver_crates.git", rev = "42c1d8c89bdf84b3de95a5eddb21d94ec3bebd75" }
 
 [dependencies.smoltcp]
 git = "https://github.com/rcore-os/smoltcp.git"
