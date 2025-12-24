@@ -240,7 +240,7 @@ impl TcpSocket {
         // SAFETY: `self.local_addr` should be initialized after `bind()`.
         let local_port = unsafe { self.local_addr.get().read().port };
         self.block_on(|| {
-            let (handle, (local_addr, peer_addr)) = LISTEN_TABLE.accept(local_port)?;
+            let (handle, (local_addr, peer_addr)) = LISTEN_TABLE.accept(local_port, None)?;
             debug!("TCP socket accepted a new connection {}", peer_addr);
             Ok(TcpSocket::new_connected(handle, local_addr, peer_addr))
         })

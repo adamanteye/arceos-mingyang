@@ -257,7 +257,7 @@ impl RxToken for AxNetRxToken<'_> {
         F: FnOnce(&[u8]) -> R,
     {
         let rx_buf = self.1;
-        trace!(
+        debug!(
             "RECV {} bytes: {:02X?}",
             rx_buf.packet_len(),
             rx_buf.packet()
@@ -339,17 +339,17 @@ pub(crate) fn init(net_dev: AxNetDevice, irq: u32) {
     info!("  IRQ:      {}", irq);
 
     // // for qemu virt eth0
-    // axhal::irq::register(irq as usize, handler);
+    axhal::irq::register(irq as usize, handler);
 
     // for visionfive2 eth0
     // axhal::irq::register(6, eth_wake_irq);
     // axhal::irq::register(5, eth_lpi);
-    axhal::irq::register(7, handler);
+    // axhal::irq::register(7, handler);
 
     // for visionfive2 eth1
     // axhal::irq::register(77, eth_wake_irq);
     // axhal::irq::register(76, eth_lpi);
-    axhal::irq::register(78, handler);
+    // axhal::irq::register(78, handler);
 
     // jh7110 uart0 input interrupt for test if PLIC is working
     // axhal::irq::register(32, || {

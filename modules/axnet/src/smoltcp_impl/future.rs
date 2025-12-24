@@ -45,21 +45,23 @@ impl<'a> Future for RecvFuture<'a> {
             }
         }
 
+        SOCKET_SET.poll_interfaces();
         let handle = this.socket.handle();
         SOCKET_SET.with_socket_mut::<Socket, _, _>(handle, |socket| {
             if !socket.is_active() {
-                return Poll::Ready(ax_err!(ConnectionRefused, "socket recv() failed"));
+                Poll::Ready(ax_err!(ConnectionRefused, "socket recv() failed"))
             } else if !socket.may_recv() {
-                return Poll::Ready(Ok(0));
+                Poll::Ready(Ok(0))
             } else if socket.recv_queue() > 0 {
-                return Poll::Ready(
+                Poll::Ready(
                     socket
                         .recv_slice(this.buf)
                         .map_err(|_| ax_err_type!(BadState, "socket recv() failed")),
-                );
+                )
             } else {
                 socket.register_recv_waker(cx.waker());
-                return Poll::Pending;
+                cx.waker().wake_by_ref();
+                Poll::Pending
             }
         })
     }
@@ -96,19 +98,21 @@ impl<'a> Future for SendFuture<'a> {
             }
         }
 
+        SOCKET_SET.poll_interfaces();
         let handle = this.socket.handle();
         SOCKET_SET.with_socket_mut::<Socket, _, _>(handle, |socket| {
             if !socket.is_active() || !socket.may_send() {
-                return Poll::Ready(ax_err!(ConnectionReset, "socket send() failed"));
+                Poll::Ready(ax_err!(ConnectionReset, "socket send() failed"))
             } else if socket.can_send() {
-                return Poll::Ready(
+                Poll::Ready(
                     socket
                         .send_slice(this.buf)
                         .map_err(|_| ax_err_type!(BadState, "socket send() failed")),
-                );
+                )
             } else {
                 socket.register_send_waker(cx.waker());
-                return Poll::Pending;
+                cx.waker().wake_by_ref();
+                Poll::Pending
             }
         })
     }
@@ -141,14 +145,18 @@ impl<'a> Future for AcceptFuture<'a> {
         }
 
         // SOCKET_SET.poll_interfaces();
+        SOCKET_SET.poll_interfaces();
         let local_port = this.socket.local_addr().unwrap().port();
-        let (handle, (local_addr, peer_addr)) = match LISTEN_TABLE.accept(local_port) {
-            Ok(res) => res,
-            Err(e) if e == AxError::WouldBlock => {
-                return Poll::Pending;
-            }
-            Err(e) => return Poll::Ready(ax_err!(e)),
-        };
+        let (handle, (local_addr, peer_addr)) =
+            match LISTEN_TABLE.accept(local_port, Some(cx.waker())) {
+                Ok(res) => res,
+                Err(AxError::WouldBlock) => {
+                    debug!("AcceptFuture::poll: pending");
+                    cx.waker().wake_by_ref();
+                    return Poll::Pending;
+                }
+                Err(e) => return Poll::Ready(ax_err!(e)),
+            };
 
         trace!("TCP socket accepted a new connection {}", peer_addr);
         Poll::Ready(Ok(TcpSocket::new_connected(handle, local_addr, peer_addr)))
@@ -237,11 +245,11 @@ impl<'a> Future for ConnectFuture<'a> {
             SOCKET_SET.with_socket_mut::<Socket, _, _>(handle, |socket| {
                 socket.register_recv_waker(cx.waker());
             });
-            return Poll::Pending;
+            Poll::Pending
         } else if this.socket.is_connected() {
-            return Poll::Ready(Ok(()));
+            Poll::Ready(Ok(()))
         } else {
-            return Poll::Ready(ax_err!(ConnectionRefused, "socket connect() failed"));
+            Poll::Ready(ax_err!(ConnectionRefused, "socket connect() failed"))
         }
     }
 }

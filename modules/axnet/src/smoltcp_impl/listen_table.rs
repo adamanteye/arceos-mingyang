@@ -1,5 +1,6 @@
 use alloc::{boxed::Box, collections::VecDeque};
 use core::ops::{Deref, DerefMut};
+use core::task::Waker;
 
 use axerrno::{AxError, AxResult, ax_err};
 use axsync::Mutex;
@@ -14,6 +15,7 @@ const PORT_NUM: usize = 65536;
 struct ListenTableEntry {
     listen_endpoint: IpListenEndpoint,
     syn_queue: VecDeque<SocketHandle>,
+    waker: Option<Waker>,
 }
 
 impl ListenTableEntry {
@@ -21,6 +23,7 @@ impl ListenTableEntry {
         Self {
             listen_endpoint,
             syn_queue: VecDeque::with_capacity(LISTEN_QUEUE_SIZE),
+            waker: None,
         }
     }
 
@@ -86,8 +89,25 @@ impl ListenTable {
         }
     }
 
-    pub fn accept(&self, port: u16) -> AxResult<(SocketHandle, (IpEndpoint, IpEndpoint))> {
+    pub fn accept(
+        &self,
+        port: u16,
+        waker: Option<&Waker>,
+    ) -> AxResult<(SocketHandle, (IpEndpoint, IpEndpoint))> {
         if let Some(entry) = self.tcp[port as usize].lock().deref_mut() {
+            if let Some(waker) = waker {
+                entry.waker = Some(waker.clone());
+                for &handle in &entry.syn_queue {
+                    SOCKET_SET.with_socket_mut::<tcp::Socket, _, _>(handle, |socket| {
+                        #[cfg(feature = "async")]
+                        {
+                            socket.register_send_waker(waker);
+                            socket.register_recv_waker(waker);
+                        }
+                    });
+                }
+            }
+
             let syn_queue = &mut entry.syn_queue;
             let (idx, addr_tuple) = syn_queue
                 .iter()
@@ -116,6 +136,7 @@ impl ListenTable {
         dst: IpEndpoint,
         sockets: &mut SocketSet<'_>,
     ) {
+        debug!("incoming_tcp_packet: {} -> {}", src, dst);
         if let Some(entry) = self.tcp[dst.port as usize].lock().deref_mut() {
             if !entry.can_accept(dst.addr) {
                 // not listening on this address
@@ -128,6 +149,13 @@ impl ListenTable {
             }
             let mut socket = SocketSetWrapper::new_tcp_socket();
             if socket.listen(entry.listen_endpoint).is_ok() {
+                if let Some(waker) = &entry.waker {
+                    #[cfg(feature = "async")]
+                    {
+                        socket.register_send_waker(waker);
+                        socket.register_recv_waker(waker);
+                    }
+                }
                 let handle = sockets.add(socket);
                 debug!(
                     "TCP socket {}: prepare for connection {} -> {}",
